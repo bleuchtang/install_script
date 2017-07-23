@@ -182,13 +182,13 @@ setup_package_source() {
     local CUSTOMAPT=/etc/apt/sources.list.d/yunohost.list
 
     # Check current system version and dependencies
-    if [[ $(lsb_release -c | awk '{print $2}') != jessie ]]; then
-        echo "Current $DISTRIB only works on Debian Jessie for the moment."
-        return 1
-    elif [ ! -d /run/systemd/system ]; then
-        echo "Current $DISTRIB only works with systemd for the moment."
-        return 1
-    fi
+#    if [[ $(lsb_release -c | awk '{print $2}') != jessie ]]; then
+#        echo "Current $DISTRIB only works on Debian Jessie for the moment."
+#        return 1
+#    elif [ ! -d /run/systemd/system ]; then
+#        echo "Current $DISTRIB only works with systemd for the moment."
+#        return 1
+#    fi
 
     # Debian repository
     local CUSTOMDEB="deb http://repo.yunohost.org/debian/ jessie stable"
