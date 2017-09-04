@@ -17,6 +17,8 @@
 
 YUNOHOST_LOG="/var/log/yunohost-installation.log"
 
+exec &> >(tee -a "$YUNOHOST_LOG")
+
 print() {
     printf "%s\n" "$*";
 }
@@ -42,7 +44,7 @@ Failure !
 The following error was caught during Yunohost installation :
 
 $1
-" >> $YUNOHOST_LOG
+"
 
     # Print to terminal
     tput setf 4
@@ -60,7 +62,7 @@ $1
 }
 
 step() {
-  printf "[ $(date --rfc-3339=seconds) ] ----- [ entering %-30s ]\n" "$1" >> $YUNOHOST_LOG
+  printf "[ $(date --rfc-3339=seconds) ] ----- [ entering %-30s ]\n" "$1"
   $*
   local return_code="$?"
   return $return_code
@@ -92,11 +94,10 @@ apt_get_wrapper() {
     if [[ "$AUTOMODE" == "0" ]] ;
     then
       debconf-apt-progress                             \
-          --logfile $YUNOHOST_LOG                      \
           --                                           \
           apt-get $*
     else
-        apt-get $* >> $YUNOHOST_LOG 2>&1
+        apt-get $* 2>&1
     fi
 }
 
@@ -113,7 +114,7 @@ upgrade_system() {
                         -y --force-yes install rpi-update \
         || return 3
         
-        rpi-update >> $YUNOHOST_LOG 2>&1 \
+        rpi-update \
         || return 4
 
     fi
@@ -143,9 +144,9 @@ installscript_dependencies() {
         || return 1
         sha256sum -c <<<"d19c6b08afb8674d1257dc3349a60e88218c4c01133c53c1fdcb02e86b415a40  metronome_3.7.9+33b7572-1_armhf.deb" \
         || return 1
-        dpkg -i metronome_3.7.9+33b7572-1_armhf.deb >> $YUNOHOST_LOG 2>&1 \
+        dpkg -i metronome_3.7.9+33b7572-1_armhf.deb 2>&1 \
         || return 1
-        apt-mark hold metronome >> $YUNOHOST_LOG 2>&1 \
+        apt-mark hold metronome 2>&1 \
         || return 1
     fi
 
@@ -253,7 +254,7 @@ workaround_avahi_installation() {
 
     # Return without error if avahi already exists
     if id avahi > /dev/null 2>&1 ; then
-        print "User avahi already exists (with uid $(id avahi)), skipping avahi workaround" >> $YUNOHOST_LOG
+        print "User avahi already exists (with uid $(id avahi)), skipping avahi workaround"
         return 0
     fi
 
@@ -264,7 +265,7 @@ workaround_avahi_installation() {
         avahi_id=$((500 + RANDOM % 500))
     done
 
-    print "Workaround for avahi : creating avahi user with uid $avahi_id" >> $YUNOHOST_LOG
+    print "Workaround for avahi : creating avahi user with uid $avahi_id"
 
     # Use the same adduser parameter as in the avahi-daemon postinst script
     # Just specify --uid explicitely
@@ -301,7 +302,7 @@ restart_services() {
 }
 
 del_user_pi() {
-    deluser --remove-all-files pi >> $YUNOHOST_LOG 2>&1
+    deluser --remove-all-files pi
 }
 
 change_hostname() {
@@ -338,16 +339,16 @@ EOF
 
 clean_image() {
     # Delete SSH keys
-    rm -f /etc/ssh/ssh_host_* >> $YUNOHOST_LOG 2>&1
-    yes | ssh-keygen -f /etc/ssh/ssh_host_rsa_key -N '' -t rsa >> $YUNOHOST_LOG 2>&1
-    yes | ssh-keygen -f /etc/ssh/ssh_host_dsa_key -N '' -t dsa >> $YUNOHOST_LOG 2>&1
-    yes | ssh-keygen -f /etc/ssh/ssh_host_ecdsa_key -N '' -t ecdsa -b 521 >> $YUNOHOST_LOG 2>&1
+    rm -f /etc/ssh/ssh_host_* 2>&1
+    yes | ssh-keygen -f /etc/ssh/ssh_host_rsa_key -N '' -t rsa 2>&1
+    yes | ssh-keygen -f /etc/ssh/ssh_host_dsa_key -N '' -t dsa 2>&1
+    yes | ssh-keygen -f /etc/ssh/ssh_host_ecdsa_key -N '' -t ecdsa -b 521 2>&1
     
     # Deleting logs ...
-    find /var/log -type f -exec rm {} \; >> $YUNOHOST_LOG 2>&1
+    find /var/log -type f -exec rm {} \; 2>&1
     
     # Purging apt ...
-    apt-get --purge clean >> $YUNOHOST_LOG 2>&1
+    apt-get --purge clean 2>&1
 }
 
 post_install() {
